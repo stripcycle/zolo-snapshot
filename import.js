@@ -1,14 +1,71 @@
 const _ = require('underscore');
+const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const GoogleSpreadsheet = require('google-spreadsheet');
 const async = require('async');
-// const randomFullName = require('random-fullName');
-var ProgressBar = require('progress');
+const { execFile } = require('child_process');
+const scriptFile = process.argv[1];
+const appDir = path.dirname(scriptFile);
 
-var argv = require('yargs').argv;
+process.chdir(appDir);
+
 const CWD = process.cwd();
-const dataFile = path.resolve(CWD, argv._[0]);
+console.log(CWD);
+const argv = require('yargs').argv;
+let dataFile = argv._.shift();
+console.log(path.resolve(appDir, dataFile));
+// process.exit();
+
+if (!fs.existsSync(path.resolve(appDir, dataFile))) {
+  console.error(`Missing dataFile: ${dataFile}`);
+  process.exit(1);
+}
+
+
+// const dataFile = path.resolve(CWD, argv._[0]);
+
+
+/*
+ *  1. get raw json data files
+ *  2. import each data file
+ *  3. zip each file - move to other directory?
+ */
+function getDataFiles(dir) {
+  return _.filter(fs.readdirSync(dir), (fileName) => {
+    return /output-[\d]{13}\.json$/.test(fileName);
+  });
+}
+
+function zipDataFiles(cb) {
+  let dir = path.resolve(appDir, 'data');
+  let pExecFile = util.promisify(execFile);
+  let dataFiles = getDataFiles(dir);
+  // console.log(dataFiles);
+
+  let files = _.map(dataFiles, (file) => {
+    return (cb) => {
+      execFile('bzip2', [path.resolve(CWD, dir, file)], (err, stdout, stderr) => {
+        if (err) throw err;
+        cb();
+      });
+    }
+  });
+
+  async.series(files, (err, result) => {
+    execFile('ls', ['-lha', './data'], (err, stdout, stderr) => {
+      if (err) throw err;
+      console.log(stdout);
+    });
+  });
+}
+
+// console.log(getDataFiles('./data'));
+// zipDataFiles('./data', (e, r) => {
+//   process.exit();
+// });
+
+
 
 if (!fs.existsSync(dataFile)) {
   console.log(`File ${dataFile} does not exist?`);
@@ -80,7 +137,8 @@ async.series([
     });
   },
   newSheet,
-  importData
+  importData,
+  zipDataFiles
 ], function(err){
     if( err ) {
       console.log('Error: '+err);

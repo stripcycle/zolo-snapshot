@@ -1,9 +1,7 @@
 const _ = require('lodash');
 const fs = require('fs');
 const path = require('path');
-
-// const output = require('../data/output-1539965821662.json');
-var argv = require('yargs').argv;
+const argv = require('yargs').argv;
 
 // console.log(`Current directory: ${process.cwd()}`);
 const CWD = process.cwd();

@@ -70,9 +70,6 @@ function getListingsForHood(hood, callback) {
     return `${hood.url}/page-${i+1}`;
   });
 
-  // console.log('getListings>', hood, urls);
-  // urls.length = 1;
-
   var _name = hood.name.toLowerCase();
   var funcs = _.map(urls, (url) => {
     return function(cb) {
@@ -129,15 +126,12 @@ function getListingsForHood(hood, callback) {
   async.parallel(funcs, (err, results) => {
     if (err) throw err;
     results = _.flatten(results);
-    console.log('getListingsForHood>', `${_name} complete: ${results.length} listings.`);
+    // console.log('getListingsForHood>', `${_name} complete: ${results.length} listings.`);
     callback(null, results);
   });
 }
 
 function getAllListings(hoods, cb) {
-
-  // hoods.length = 1;
-
   var funcs = _.map(hoods, (hood) => {
     return (callback) => {
       getListingsForHood(hood, (e, listings) => {
@@ -178,7 +172,7 @@ getHoods((e, hoods) => {
     if (err) throw err;
     listings = _.flatten(listings);
 
-    console.log('getAllListings>', `${listings.length} total listings found  in ${hoods.length} neighborhoods.`);
+    // console.log('getAllListings>', `${listings.length} total listings found in ${hoods.length} neighborhoods.`);
 
     let quickstats = summarize(listings);
 
@@ -200,7 +194,7 @@ getHoods((e, hoods) => {
 
     fs.writeFile(OUTFILE, data, 'utf8', (err) => {
       if (err) throw err;
-      console.log('Done: ', OUTFILE);
+      console.log(OUTFILE);
     });
   });
 });

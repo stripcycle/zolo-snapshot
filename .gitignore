@@ -1,3 +1,5 @@
 node_modules
 data/*.json
+data/*.bz2
 Zolo-*
+*.DS_Store*
