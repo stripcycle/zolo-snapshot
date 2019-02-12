@@ -3,8 +3,17 @@ const async = require('async');
 const lodash = require('lodash');
 const cheerio = require('cheerio');
 const fs = require('fs');
-
+const path = require('path');
 const _ = lodash;
+
+const scriptFile = process.argv[1];
+const appDir = path.dirname(scriptFile);
+const dataDir = path.resolve(appDir, 'data');
+const DATETIME = Date.now();
+const OUTFILE = path.resolve(dataDir, `output-${DATETIME}.json`);
+const DEBUG = true;
+
+process.chdir(appDir);
 
 function getHoods(callback) {
   let rootUrl = 'https://www.zolo.ca/vancouver-real-estate/neighbourhoods';
@@ -160,11 +169,6 @@ function summarize(results) {
 
   return stats;
 }
-
-const DATETIME = Date.now();
-const OUTFILE = `./data/output-${DATETIME}.json`;
-const DEBUG = true;
-
 
 getHoods((e, hoods) => {
   if (e) throw e;
