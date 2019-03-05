@@ -28,7 +28,8 @@ if (!fs.existsSync(argv.f)) {
 }
 
 // should be from config json file
-const GOOGLE_SPREADSHEETID = '10hl-nQGdsABnj28RaqeMSvTQA3AXp6oOh4B1v1Ra8sg';
+const GOOGLE_SPREADSHEETID = '10hl-nQGdsABnj28RaqeMSvTQA3AXp6oOh4B1v1Ra8sg'; // Test doc
+// const GOOGLE_SPREADSHEETID = '1lNSnMXov81JgFkyy0ac64uAvj1xgj10_NYvImH7doZw'; // Production doc
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
@@ -104,7 +105,7 @@ authClient.authorize(function(err, tokens) {
 
   createSheet(GOOGLE_SPREADSHEETID, info, data, (err, result) => {
     if (err) throw err;
-    console.log(result);
+    console.log(`${result.status} - ${result.statusText}`);
 
     process.exit();
   });
