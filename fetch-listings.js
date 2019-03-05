@@ -13,7 +13,21 @@ const DATETIME = Date.now();
 const OUTFILE = path.resolve(dataDir, `output-${DATETIME}.json`);
 const DEBUG = true;
 
+/**
+
+TODO:
+* abstract out so that city is an argument, we'll just do a whitelist of cities for now.
+* weird thing: no neighbourhoods in Calgary listings?
+* neither does PG: https://www.zolo.ca/prince-george-real-estate
+
+*/
+
+
 process.chdir(appDir);
+
+function getCities(callback) {
+
+}
 
 function getHoods(callback) {
   let rootUrl = 'https://www.zolo.ca/vancouver-real-estate/neighbourhoods';
