@@ -9,17 +9,19 @@ const appDir = path.dirname(scriptFile);
 const dataDir = path.resolve(appDir, 'data');
 process.chdir(appDir); // change to CWD
 
+const config = require('./config.json');
+
 /*
 TODO:
 
-1. create new named sheet and import into that sheet
-2. calculate some basic stats and insert them into the same sheet
-
+1. calculate some basic stats and insert them into the same sheet
 */
+
 const argv = require('yargs')
-  .usage("Usage: $0 -f <datafile.json>")
+  .usage("Usage: $0 -m <test or prod> -f <datafile.json>")
   .alias('f', 'file')
   .describe('f', 'JSON file to import into Google Sheets.')
+  .describe('m', 'Use the test or production configuration - default is test.')
   .demandOption(['f'])
   .argv;
 
@@ -27,24 +29,23 @@ if (!fs.existsSync(argv.f)) {
   console.error("Data file does not exist: %s.", argv.f);
 }
 
-// should be from config json file
-const GOOGLE_SPREADSHEETID = '10hl-nQGdsABnj28RaqeMSvTQA3AXp6oOh4B1v1Ra8sg'; // Test doc
-// const GOOGLE_SPREADSHEETID = '1lNSnMXov81JgFkyy0ac64uAvj1xgj10_NYvImH7doZw'; // Production doc
+// which google sheet document are we importing into. Default is the test doc.
+let sheetId = config.test.sheetId;
+if (argv.m === "prod") {
+  sheetId = config.prod.sheetId;
+}
 
-// If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
 
 // Create the JWT client
 const keyPath = path.resolve(appDir, 'Zolo-b45d3b3b2eb4.json');
 const creds = require(keyPath);
-// console.log(creds.client_email);
 const email = creds.client_email;
 const authClient = new google.auth.JWT(creds.client_email, keyPath, null, SCOPES);
 const sheets = google.sheets('v4');
 
 function createSheet(sheetId, info, data, callback) {
-
   info.gridProperties = {
     rowCount: data.length,
     columnCount: 12
@@ -83,27 +84,28 @@ function createSheet(sheetId, info, data, callback) {
 // Authorize it to produce an access token
 authClient.authorize(function(err, tokens) {
   if(err) throw err;
+
+  let data = require(argv.f);
   // sheet title unique key is the timestamp of the data file
-  let d = new Date();
+  let ts = data.meta.timestamp;
+  let strDate = new Date(ts).toDateString();
   let info = {
-    title: `${Date.now()} - ${d.toDateString()}`
+    title: `${ts} - ${strDate}`
   };
 
-  console.log('info>', info);
-
-  let data = require(argv.f).data;
+  let rows = data.data;
 
   // data.length = 20;
-  let headers = _.keys(data[0]);
+  let headers = _.keys(rows[0]);
 
-  data = _.map(data, (row) => {
+  rows = _.map(rows, (row) => {
     row.address = _.values(row.address).join(' ');
     return _.values(row);
   });
 
-  data.unshift(headers);
+  rows.unshift(headers);
 
-  createSheet(GOOGLE_SPREADSHEETID, info, data, (err, result) => {
+  createSheet(GOOGLE_SPREADSHEETID, info, rows, (err, result) => {
     if (err) throw err;
     console.log(`${result.status} - ${result.statusText}`);
 

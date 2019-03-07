@@ -6,9 +6,11 @@
 #
 # for f in $FILES
 
-FILES=./data/*.json
-for f in $FILES
+
+for f in ./data/*.json
 do
-  echo "Processing $f file..."
-  node ./import.js -f $f && bzip2 $f
+  if [ -f $f ]
+  then
+    node ./import.js -f $f && bzip2 $f
+  fi
 done
