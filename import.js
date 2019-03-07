@@ -30,7 +30,8 @@ if (!fs.existsSync(argv.f)) {
 }
 
 // which google sheet document are we importing into. Default is the test doc.
-let sheetId = config.test.sheetId;
+
+var sheetId = config.test.sheetId;
 if (argv.m === "prod") {
   sheetId = config.prod.sheetId;
 }
@@ -108,7 +109,6 @@ authClient.authorize(function(err, tokens) {
   createSheet(sheetId, info, rows, (err, result) => {
     if (err) throw err;
     console.log(`${result.status} - ${result.statusText}`);
-
     process.exit();
   });
 });
