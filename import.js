@@ -105,7 +105,7 @@ authClient.authorize(function(err, tokens) {
 
   rows.unshift(headers);
 
-  createSheet(GOOGLE_SPREADSHEETID, info, rows, (err, result) => {
+  createSheet(sheetId, info, rows, (err, result) => {
     if (err) throw err;
     console.log(`${result.status} - ${result.statusText}`);
 
