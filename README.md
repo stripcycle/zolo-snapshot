@@ -1,12 +1,9 @@
 # TODO
 
-* handle data inconsistencies - some article cards don't have an address because they are too new
+
 * .csv output
 * summary stats - some done but needs work...
-* use GSheets as data analysis tool
-  * create raw csv structure
-  * upload into GSheets worksheet
-** run analysis scripts using API as datasource
+
 * assessed value / price history from gov't
 * MLS # somehow?
 * capture lat/long per address
@@ -15,6 +12,11 @@
 
 # DONE
 
+* <del>use GSheets as data analysis tool
+  * <del>create raw csv structure
+  * <del>upload into GSheets worksheet
+* <del>run analysis scripts using API as datasource
+* <del>handle data inconsistencies - some article cards don't have an address because they are too new
 * <del>walk listing pages by hood
 * <del>parse article elements for as much info as possible
 * <del>output file in reasonable format
