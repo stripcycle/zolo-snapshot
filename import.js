@@ -47,7 +47,6 @@ const sheetsApi = google.sheets('v4');
 function formatDate(ts) {
   let d = new Date(ts);
   return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-  // return "Boo."
 }
 
 // get an array of sheet objects
