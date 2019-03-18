@@ -1,79 +1,143 @@
-const _ = require('underscore');
-const GoogleSpreadsheet = require('google-spreadsheet');
+const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
 const async = require('async');
-// const randomFullName = require('random-fullName');
-var ProgressBar = require('progress');
+const {google} = require('googleapis');
+const { execFile } = require('child_process');
+const scriptFile = process.argv[1];
+const appDir = path.dirname(scriptFile);
+const dataDir = path.resolve(appDir, 'data');
+process.chdir(appDir); // change to CWD
 
-// spreadsheet key is the long id in the sheets URL
-const credentials = require('./Zolo-b45d3b3b2eb4.json');
-// const credentials = require('./Zolo-f6eda074184c.json');
+const config = require('./config.json');
 
+let sheetId = config.prod.sheetId;
+// let sheetId = config.test.sheetId;
 
-// 1vrCahojYUqgkssi8HTFpTm8nTdboHGXEyBfxWFIBq2M
-const sheetId = '1lNSnMXov81JgFkyy0ac64uAvj1xgj10_NYvImH7doZw';
-var doc = new GoogleSpreadsheet(sheetId);
-var sheet, sheets, rows, headers;
-var cols = data[0].length+1;
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
-// get data file from command line
+// Create the JWT client
+const keyPath = path.resolve(appDir, 'Zolo-b45d3b3b2eb4.json');
+const creds = require(keyPath);
+const email = creds.client_email;
+const authClient = new google.auth.JWT(creds.client_email, keyPath, null, SCOPES);
+const sheetsApi = google.sheets('v4');
 
-
-function setAuth(step) {
-  console.log(`In setAuth`);
-  doc.useServiceAccountAuth(credentials, step);
-}
-
-function getInfo(step) {
-  doc.getInfo(function(err, info) {
+function getSheets(sheetId, callback) {
+  let req = {
+    auth: authClient,
+    spreadsheetId: sheetId
+  };
+  sheetsApi.spreadsheets.get(req, (err, result) => {
     if (err) throw err;
-    console.log('Loaded doc: '+info.title+' by '+info.author.email);
-    console.log(`Got ${info.worksheets.length} worksheets.`);
-    sheets = info.worksheets.slice(1); // retain one worksheet
-
-    // console.log(typeof step);
-    sheet = info.worksheets[0]; // root sheet
-    console.log('sheet 1: '+sheet.title+' '+sheet.rowCount+'x'+sheet.colCount);
-    step();
+    callback(null, result.data.sheets);
   });
 }
 
-function hack(step) {
-
-  let _data = data;
-  let headers = _.keys(_data[0]);
-  // _data = _data.slice(1)
-
-  // console.log(_data[267]);
-  // console.log(_data[268]);
-  // console.log(_data[269]);
-
-
-
-  sheet.setHeaderRow(headers, (err) => {
-    if (err) throw err;
-    let functions = _.map(_data, (row) => {
-      return (cb) => {
-        let _row = row;
-        _row.address = _.values(_row.address).join(" ");
-        sheet.addRow(_row, cb);
-      }
-    });
-
-    async.parallelLimit(functions, 20, (err, result) => {
-      if (err) throw err;
-      console.log('Done');
-      step();
-    });
-  });
-}
-
-
-async.series([
-  setAuth,
-  getInfo,
-  hack
-], function(err){
-    if( err ) {
-      console.log('Error: '+err);
+function addSummary(sheetId, sheetTitle, callback) {
+  let strRange = `'${sheetTitle}'!G1:H4`;
+  let req = {
+    auth: authClient,
+    spreadsheetId: sheetId,
+    range: strRange,
+    valueInputOption: 'USER_ENTERED',
+    resource: {
+      range: strRange,
+      values: [
+        ["Total listings",  '=COUNT(A:A)'],
+        ["Condos",          '=COUNTIF(F:F, "condo")'],
+        ["Townhouses",      '=COUNTIF(F:F, "townhouse")'],
+        ["Houses",          '=COUNTIF(F:F, "house")'],
+      ],
+      majorDimension: "ROWS"
     }
-});
+  };
+
+  sheetsApi.spreadsheets.values.update(req, callback);
+}
+
+/**
+  @param ts - a UNIX timestamp
+  @return a date formatted according to the string provided, or
+*/
+function formatDate(ts) {
+  let d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+  // return "Boo."
+}
+
+function setAnalysis(sheetId, callback) {
+  getSheets(sheetId, (err, sheets) => {
+    if (err) throw err;
+    let first = sheets.shift(); // remove first row
+    let arr = _.map(sheets, (sheet) => {
+      return sheet.properties.title;
+    });
+
+    let table = _.map(sheets, (sheet) => {
+      let sheetTitle = sheet.properties.title;
+      let _r = _.map(_.range(1, 5), (r) => {
+        return `='${sheetTitle}'!H${r}`;
+      });
+      // insert column A as a date column.
+      let ts = parseInt(sheetTitle.split(' - ').shift());
+      _r.unshift(formatDate(ts));
+      return _r;
+    });
+
+    // set headers
+    table.unshift(["Date", "Total listings", "Condos", "Townhouses", "Houses"]);
+
+    let strRange = `${first.properties.title}!A1:E${table.length}`;
+
+    let req = {
+      auth: authClient,
+      spreadsheetId: sheetId,
+      range: strRange,
+      valueInputOption: "USER_ENTERED",
+      resource: {
+        majorDimension: "ROWS",
+        range: strRange,
+        values: table
+      }
+    };
+
+    sheetsApi.spreadsheets.values.update(req, callback);
+  });
+}
+
+function addSummaries(sheetId, callback) {
+  getSheets(sheetId, (err, sheets) => {
+    if (err) throw err;
+    let first = sheets.shift(); // remove first sheet
+    let functions = _.map(sheets, (sheet) => {
+      return (step) => {
+        addSummary(sheetId, sheet.properties.title, step);
+      };
+    });
+    async.series(functions, (err, result) => {
+      if (err) throw err;
+      callback(null, result);
+    });
+  });
+}
+
+if (require.main === module) {
+  async.series([
+    (step) => {
+      console.log('in addSummary.');
+      addSummaries(sheetId, step);
+    },
+    (step) => {
+      console.log('in setAnalysis.');
+      setAnalysis(sheetId, (err, result) => {
+        if (err) throw err;
+        step(null, `setAnalysis> ${result.status} - ${result.statusText}`);
+      });
+    }
+  ], (err, result) => {
+    if (err) throw err;
+    console.log('Done!');
+    console.log(result);
+  });
+}
