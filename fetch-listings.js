@@ -110,7 +110,7 @@ function getListingsForHood(hood, callback) {
 
             // handle property type by looking for the type-* classes
             let type;
-            let img = $('div.card-listing--image');
+            let img = $(this).find('div.card-listing--image');
             if (img.hasClass('type-condo')) {
               type = 'condo'
             } else if (img.hasClass('type-townhouse')) {
@@ -118,6 +118,7 @@ function getListingsForHood(hood, callback) {
             } else if (img.hasClass('type-house')) {
               type = 'house';
             } else {
+              // Probably "land-only". Would need to fetch actual property page to know for sure.
               type = 'unknown';
             }
 

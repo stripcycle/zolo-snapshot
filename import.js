@@ -111,7 +111,7 @@ function setAnalysis(sheetId, callback) {
 
     let table = _.map(sheets, (sheet) => {
       let sheetTitle = sheet.properties.title;
-      let _r = _.map(_.range(1, 5), (r) => {
+      let _r = _.map(_.range(1, 6), (r) => {
         return `='${sheetTitle}'!H${r}`;
       });
       // insert column A as a date column.
@@ -121,9 +121,9 @@ function setAnalysis(sheetId, callback) {
     });
 
     // set headers
-    table.unshift(["Date", "Total listings", "Condos", "Townhouses", "Houses"]);
+    table.unshift(["Date", "Total listings", "Condos", "Townhouses", "Houses", "Unknown/Other"]);
 
-    let strRange = `${first.properties.title}!A1:E${table.length}`;
+    let strRange = `${first.properties.title}!A1:F${table.length}`;
 
     let req = {
       auth: authClient,
@@ -142,7 +142,7 @@ function setAnalysis(sheetId, callback) {
 }
 
 function addSummary(sheetId, sheetTitle, callback) {
-  let strRange = `'${sheetTitle}'!G1:H4`;
+  let strRange = `'${sheetTitle}'!G1:H5`;
   let req = {
     auth: authClient,
     spreadsheetId: sheetId,
@@ -151,10 +151,11 @@ function addSummary(sheetId, sheetTitle, callback) {
     resource: {
       range: strRange,
       values: [
-        ["Total listings",  '=COUNT(A:A)'],
-        ["Condos",          '=COUNTIF(F:F, "condo")'],
-        ["Townhouses",      '=COUNTIF(F:F, "townhouse")'],
-        ["Houses",          '=COUNTIF(F:F, "house")'],
+        ["Total listings",    '=COUNT(A:A)'],
+        ["Condos",            '=COUNTIF(F:F, "condo")'],
+        ["Townhouses",        '=COUNTIF(F:F, "townhouse")'],
+        ["Houses",            '=COUNTIF(F:F, "house")'],
+        ["Unknown/Other",     '=COUNTIF(F:F, "unknown")'],
       ],
       majorDimension: "ROWS"
     }
