@@ -11,6 +11,6 @@ for f in ./data/*.json
 do
   if [ -f $f ]
   then
-    node ./import.js -f $f && bzip2 $f
+    node ./import.js -f $f -m prod && bzip2 $f && sleep 2
   fi
 done
