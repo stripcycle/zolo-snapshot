@@ -105,6 +105,15 @@ function setAnalysis(sheetId, callback) {
   getSheets(sheetId, (err, sheets) => {
     if (err) throw err;
     let first = sheets.shift(); // remove first row
+    // XXX remove worksheets prior to March 19
+    // 1553032861604 - Tue Mar 19 2019
+    sheets = _.filter(sheets, (_s) => {
+      let _t = parseInt(_s.properties.title.split(' - ').shift());
+      if (_t >= 1553032861604) {
+        return true;
+      }
+    });
+
     let arr = _.map(sheets, (sheet) => {
       return sheet.properties.title;
     });
@@ -190,23 +199,27 @@ authClient.authorize(function(err, tokens) {
     (step) => { // create the new sheet and add data
       createSheet(sheetId, info, rows, (err, result) => {
         if (err) throw err;
+        console.log('createSheet>', result.status, result.statusText);
         step(null, result);
       });
     },
     (step) => { // insert some summary fields with forumulae
       addSummary(sheetId, info.title, (err, result) => {
         if (err) throw err;
+        console.log('addSummary>', result.status, result.statusText);
         step(null, result);
       });
     },
     (step) => {
-      setAnalysis(sheetId, step);
+      setAnalysis(sheetId, (err, result) => {
+        if (err) throw err;
+        console.log('setAnalysis>', result.status, result.statusText);
+      });
     }
   ];
 
   async.series(functions, (err, result) => {
     if (err) throw err;
-    console.log(result);
   });
 
 });
