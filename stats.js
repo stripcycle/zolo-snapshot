@@ -90,13 +90,15 @@ function pricingByType(data, type) {
     return (parseInt(item) > 0);
   });
 
+  console.log('unzipped>', unzipped);
+
   let analysis = {
     type: type,
     total: filtered.length,
     averagePrice: UP(mean(unzipped[0])),
     medianPrice: UP(median(unzipped[0])),
-    averagePricePerSqft: UP(mean(pricePerSqftArr)),
-    medianPricePerSqft: UP(median(pricePerSqftArr)),
+    // averagePricePerSqft: UP(mean(pricePerSqftArr)),
+    // medianPricePerSqft: UP(median(pricePerSqftArr)),
   }
 
   return analysis;
