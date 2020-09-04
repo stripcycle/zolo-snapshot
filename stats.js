@@ -17,16 +17,6 @@ TODO:
 2. calculate some basic stats and insert them into the same sheet
 
 */
-const argv = require('yargs')
-  .usage("Usage: $0 -f <datafile.json>")
-  .alias('f', 'file')
-  .describe('f', 'JSON file to import into Google Sheets.')
-  .demandOption(['f'])
-  .argv;
-
-if (!fs.existsSync(argv.f)) {
-  console.error("Data file does not exist: %s.", argv.f);
-}
 
 // should be from config json file
 const GOOGLE_SPREADSHEETID = '10hl-nQGdsABnj28RaqeMSvTQA3AXp6oOh4B1v1Ra8sg';
@@ -133,6 +123,18 @@ function pricingByHoods(data) {
 }
 
 if (require.main === module) {
+
+  const argv = require('yargs')
+    .usage("Usage: $0 -f <datafile.json>")
+    .alias('f', 'file')
+    .describe('f', 'JSON file to import into Google Sheets.')
+    .demandOption(['f'])
+    .argv;
+
+  if (!fs.existsSync(argv.f)) {
+    console.error("Data file does not exist: %s.", argv.f);
+  }
+
   let data = require(argv.f).data;
   // data.length = 20;
   // get typs of properties:
